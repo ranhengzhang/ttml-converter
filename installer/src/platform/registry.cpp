@@ -88,6 +88,7 @@ bool Registry::deleteSubMenu(const QString &parent_key) {
 bool Registry::installContextMenu() {
     QList<SubMenuItem> convert_items;
 
+    convert_items.append({QStringLiteral("ttml"), QStringLiteral("TTML 文件去格式化/压缩")});
     convert_items.append({QStringLiteral("ass"), QStringLiteral("转换为 ASS 特效字幕")});
     convert_items.append({QStringLiteral("lrc"), QStringLiteral("转换为 LRC 歌词 (Walkman 标准)")});
     convert_items.append({QStringLiteral("spl"), QStringLiteral("转换为 SPL 歌词")});
