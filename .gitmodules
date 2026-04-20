@@ -1,0 +1,3 @@
+[submodule "converter/src/lyric"]
+	path = converter/src/lyric
+	url = git@github.com:ranhengzhang/ttml-cpp-qt-parser.git
