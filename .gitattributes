@@ -1,0 +1,3 @@
+*.h eol=lf
+*.cpp eol=lf
+*.txt eol=lf
