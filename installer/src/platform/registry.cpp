@@ -36,6 +36,12 @@ bool Registry::createSubMenu(const QString &parent_key, const QString &menu_name
     const QString exe_path_quoted = QString(R"("%1")").arg(exe_path);
     WinRegistry reg(WinRegistry::ClassesRoot);
 
+    // 检查是否已存在，如果存在则先删除
+    if (reg.open(parent_key, false)) {
+        reg.close();
+        deleteSubMenu(parent_key);
+    }
+
     if (!reg.open(parent_key, true)) {
         return false;
     }
