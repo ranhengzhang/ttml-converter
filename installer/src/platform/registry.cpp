@@ -33,7 +33,7 @@ static QString getConverterPath() {
 
 bool Registry::createSubMenu(const QString &parent_key, const QString &menu_name, const QList<SubMenuItem> &items) {
     const QString exe_path = getConverterPath().replace("/", "\\");
-    const QString exe_path_quoted = QString("'%1'").arg(exe_path);
+    const QString exe_path_quoted = QString(R"("%1")").arg(exe_path);
     WinRegistry reg(WinRegistry::ClassesRoot);
 
     if (!reg.open(parent_key, true)) {
@@ -66,7 +66,7 @@ bool Registry::createSubMenu(const QString &parent_key, const QString &menu_name
 
         QString command_key = item_key + QStringLiteral(R"(\command)");
         if (reg.open(command_key, true)) {
-            QString command = QStringLiteral("%1 -f %2 '%3'").arg(exe_path_quoted).arg(ext).arg(QString("%1"));
+            QString command = QStringLiteral(R"(%1 -f %2 "%3")").arg(exe_path_quoted).arg(ext).arg(QString("%1"));
             reg.setValue(QString(), command);
             reg.close();
         }
