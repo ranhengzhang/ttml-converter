@@ -1,2 +1,6 @@
 .idea/
+.claude/
 cmake-build-*/
+.gitnexus
+AGENTS.md
+CLAUDE.md
