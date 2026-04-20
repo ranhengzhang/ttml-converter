@@ -33,7 +33,8 @@ const QStringList supported_formats = {
     "qrc",
     "yrc",
     "krc",
-    "txt"
+    "txt",
+    "ttml"
 };
 
 QString convert(LyricObject &lyric_object, const QString &type) {
@@ -67,6 +68,9 @@ QString convert(LyricObject &lyric_object, const QString &type) {
         }
         case 7: {
             return lyric_object.toTXT();
+        }
+        case 8: {
+            return lyric_object.toTTML();
         }
         default: {
             return {};
@@ -141,13 +145,19 @@ int main(int argc, char *argv[]) {
 
     in.setEncoding(QStringConverter::Utf8);
 
-    QString ttml_content = in.readAll();
+    auto text = in.readAll();
 
     file.close();
 
-    auto [lyric_object, status] = LyricObject::fromTTML(ttml_content);
+    auto [ttml_content, ttml_status] = lyric::utils::compressTtml(text);
 
-    if (status != LyricObject::Status::Success) {
+    if (ttml_status != lyric::utils::Status::Success) {
+        return 1;
+    }
+
+    auto [lyric_object, generate_status] = LyricObject::fromTTML(ttml_content);
+
+    if (generate_status != LyricObject::Status::Success) {
         return 1;
     }
 
