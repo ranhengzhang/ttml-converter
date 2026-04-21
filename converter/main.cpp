@@ -15,9 +15,12 @@
 //  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <QCommandLineParser>
-#include <QCoreApplication>
+#include <QApplication>
 #include <QTextStream>
 #include <QFileInfo>
+#include <QRegularExpression>
+#include <QSettings>
+#include <QInputDialog>
 
 #include "version.h"
 
@@ -42,6 +45,8 @@ const std::map<QString, QString> special_ext = {
     {"spl", "lrc"},
     {"amll", "ttml"}
 };
+
+std::unique_ptr<QSettings> config;
 
 QString convert(LyricObject &lyric_object, const QString &type) {
     // ReSharper disable once CppTooWideScope
@@ -87,11 +92,79 @@ QString convert(LyricObject &lyric_object, const QString &type) {
     }
 }
 
-int main(int argc, char *argv[]) {
-    QCoreApplication a(argc, argv);
+QString toSafeFileName(QString name) {
+    static QRegularExpression illegal_chars(R"([\\/:*?"<>|])");
 
-    QCoreApplication::setApplicationName("ttml-converter");
-    QCoreApplication::setApplicationVersion(PROJECT_VERSION);
+    QString safe_name = name.replace(illegal_chars, "_");
+
+    for (int i = 0; i < safe_name.length(); ++i) {
+        if (safe_name.at(i).unicode() < 32) {
+            safe_name[i] = '_';
+        }
+    }
+
+    return safe_name.trimmed();
+}
+
+template <typename T>
+QMap<QString, T> convertKeysToUpperCaseNoSpace(const QMap<QString, T> &old_map) {
+    QMap<QString, T> new_map;
+
+    for (auto it = old_map.begin(); it != old_map.end(); ++it) {
+        QString old_key = it.key();
+
+        QString new_key = old_key.remove("_").remove("-").remove(" ").toUpper();
+
+        new_map.insert(new_key, it.value());
+    }
+
+    return new_map;
+}
+
+QString generateOutputFileName(const QString& original_filename, QString output_template, LyricObject &lyric_object) {
+    auto original_map = lyric_object.getMeta();
+
+    original_map["filename"] = {original_filename};
+    original_map["songWriters"].append(lyric_object.getSongWriter());
+
+    auto temp_map = convertKeysToUpperCaseNoSpace(original_map);
+
+    temp_map["TITLE"] = temp_map["MUSICNAME"];
+    temp_map["ARTIST"] = temp_map["ARTISTS"];
+
+    QMap<QString, QString> template_map;
+
+    for (const auto &[key, value]: temp_map.asKeyValueRange()) {
+        template_map[QString("ALL") + key] = temp_map[key].join("／");
+        template_map[key] = temp_map[key].first();
+    }
+
+    const QRegularExpression re(R"(%([A-z]+)%)");
+    auto ite = re.globalMatch(output_template);
+    QList<QRegularExpressionMatch> matches;
+
+    while (ite.hasNext()) {
+        matches.append(ite.next());
+    }
+
+    for (int i = matches.size() - 1; i >= 0; --i) {
+        const auto &match = matches.at(i);
+
+        output_template.replace(match.capturedStart(1), match.capturedLength(1), match.captured(1).remove("_").remove("-").remove(" ").toUpper());
+    }
+
+    for (const auto &[key, value]: template_map.asKeyValueRange()) {
+        output_template.replace(QString("%") + key + "%", toSafeFileName(value));
+    }
+
+    return output_template;
+}
+
+int main(int argc, char *argv[]) {
+    QApplication a(argc, argv);
+
+    QApplication::setApplicationName("ttml-converter");
+    QApplication::setApplicationVersion(PROJECT_VERSION);
 
     QCommandLineParser parser;
 
@@ -111,10 +184,32 @@ int main(int argc, char *argv[]) {
         "output"
     );
 
+    const QCommandLineOption config_option(
+        QStringList() << "c" << "config",
+        "配置默认文件名模板"
+    );
+
     parser.addOption(format_option);
     parser.addOption(output_option);
+    parser.addOption(config_option);
     parser.addPositionalArgument("file", "输入的 TTML 文件路径");
     parser.process(a);
+
+    const QString config_path = QApplication::applicationDirPath() + "/settings.ini";
+    config = std::make_unique<QSettings>(config_path, QSettings::IniFormat);
+
+    if (parser.isSet(config_option)) {
+        auto hook = std::make_shared<QWidget>(new QWidget());
+        bool ok;
+        auto old_val = config->contains("template") ? config->value("template").toString() : "";
+        auto new_val = QInputDialog::getText(hook.get(), "配置默认文件名模板", "请输入默认文件名模板", QLineEdit::Normal, old_val, &ok);
+
+        if (ok) {
+            config->setValue("template", new_val);
+        }
+
+        return 0;
+    }
 
     const QStringList args = parser.positionalArguments();
 
@@ -141,7 +236,7 @@ int main(int argc, char *argv[]) {
     QString output_template = parser.value(output_option);
 
     if (output_template.isEmpty()) {
-        output_template = "%filename%";
+        output_template = config->contains("template") ? config->value("template").toString() : "%filename%";
     }
 
     QFile file(input_file);
@@ -180,11 +275,7 @@ int main(int argc, char *argv[]) {
         extension = index->second;
     }
 
-    if (output_template == "%filename%") {
-        output_file_name = base_name + "." + extension;
-    } else {
-        output_file_name = output_template + "." + extension;
-    }
+    output_file_name = generateOutputFileName(base_name, output_template, lyric_object) + "." + extension;
 
     QString output_path = output_dir + "/" + output_file_name;
 
