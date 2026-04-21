@@ -17,7 +17,7 @@
 # 先引入 lyric 子项目，获取其版本号
 add_subdirectory(src/lyric)
 
-project(converter VERSION 0.1.1.${LYRIC_VERSION_COMBINED})
+project(converter VERSION 0.2.1.${LYRIC_VERSION_COMBINED})
 
 message(STATUS "converter version: ${PROJECT_VERSION}")
 

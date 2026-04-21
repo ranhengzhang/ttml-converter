@@ -34,7 +34,13 @@ const QStringList supported_formats = {
     "yrc",
     "krc",
     "txt",
-    "ttml"
+    "ttml",
+    "amll"
+};
+
+const std::map<QString, QString> special_ext = {
+    {"spl", "lrc"},
+    {"amll", "ttml"}
 };
 
 QString convert(LyricObject &lyric_object, const QString &type) {
@@ -71,6 +77,9 @@ QString convert(LyricObject &lyric_object, const QString &type) {
         }
         case 8: {
             return lyric_object.toTTML();
+        }
+        case 9: {
+            return lyric_object.toAMLL();
         }
         default: {
             return {};
@@ -165,22 +174,26 @@ int main(int argc, char *argv[]) {
     QString output_dir = input_info.path();
     QString base_name = input_info.baseName();
     QString output_file_name;
+    QString extension = format.toLower();
+
+    if (auto index = special_ext.find(extension); index != special_ext.end()) {
+        extension = index->second;
+    }
 
     if (output_template == "%filename%") {
-        output_file_name = base_name + "." + format.toLower();
+        output_file_name = base_name + "." + extension;
     } else {
-        output_file_name = output_template + "." + format.toLower();
+        output_file_name = output_template + "." + extension;
     }
 
     QString output_path = output_dir + "/" + output_file_name;
 
     if (QFile::exists(output_path)) {
-        QString ext = format.toLower();
         QString name_without_ext = output_template == "%filename%" ? base_name : output_template;
         int counter = 1;
 
         do {
-            output_file_name = QString("%1 (%2).%3").arg(name_without_ext).arg(counter).arg(ext);
+            output_file_name = QString("%1 (%2).%3").arg(name_without_ext).arg(counter).arg(extension);
             output_path = output_dir + "/" + output_file_name;
             counter++;
         } while (QFile::exists(output_path));
