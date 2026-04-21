@@ -59,9 +59,29 @@ bool Registry::createSubMenu(const QString &parent_key, const QString &menu_name
     }
     reg.close();
 
+    const auto bite_length = QString::number(items.size()).length();
+
+    {
+        QString item_key = shell_key + QStringLiteral("\\%1-config").arg(0, bite_length, 10, QLatin1Char('0'));
+
+        if (!reg.open(item_key, true)) {
+            return false;
+        }
+
+        reg.setValue(QStringLiteral("MUIVerb"), QStringLiteral("配置默认文件名模板"));
+        reg.close();
+
+        const QString command_key = item_key + QStringLiteral(R"(\command)");
+        if (reg.open(command_key, true)) {
+            const auto command = QStringLiteral(R"(%1 -c)").arg(exe_path_quoted);
+            reg.setValue(QStringLiteral(), command);
+            reg.close();
+        }
+    }
+
     for (int i = 0; i < items.size(); ++i) {
         auto &[ext, title] = items[i];
-        QString item_key = shell_key + QStringLiteral("\\%1-").arg(i + 1, QString::number(items.size()).length(), 10, QLatin1Char('0')) + ext;
+        QString item_key = shell_key + QStringLiteral("\\%1-").arg(i + 1, bite_length, 10, QLatin1Char('0')) + ext;
 
         if (!reg.open(item_key, true)) {
             continue;
