@@ -39,17 +39,17 @@ public:
 
     void close();
 
-    [[nodiscard]] bool setValue(const QString &name, const QString &value) const;
+    bool setValue(const QString &name, const QString &value) const;
 
-    [[nodiscard]] bool setValue(const QString &name, uint32_t value) const;
+    bool setValue(const QString &name, uint32_t value) const;
 
-    [[nodiscard]] bool setValue(const QString &name, const QByteArray &value) const;
+    bool setValue(const QString &name, const QByteArray &value) const;
 
-    [[nodiscard]] bool deleteValue(const QString &name) const;
+    bool deleteValue(const QString &name) const;
 
-    [[nodiscard]] bool deleteKey(const QString &path) const;
+    bool deleteKey(const QString &path) const;
 
-    [[nodiscard]] bool deleteTree(const QString &path) const;
+    bool deleteTree(const QString &path) const;
 
     [[nodiscard]] QString stringValue(const QString &name, const QString &default_value = QString()) const;
 

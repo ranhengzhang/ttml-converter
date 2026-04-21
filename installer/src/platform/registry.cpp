@@ -46,11 +46,11 @@ bool Registry::createSubMenu(const QString &parent_key, const QString &menu_name
         return false;
     }
 
-    reg.setValue(QString(), QString());
-    reg.setValue(QStringLiteral("SubCommands"), QString());
+    reg.setValue(QStringLiteral(), QStringLiteral());
+    reg.setValue(QStringLiteral("SubCommands"), QStringLiteral());
     reg.setValue(QStringLiteral("AppliesTo"), QStringLiteral("System.ItemName:ttml"));
-    reg.setValue(QStringLiteral("Icon"), exe_path + QStringLiteral(",0"));
-    reg.setValue(QStringLiteral("MUIVerb"), menu_name);
+    reg.setValue(QStringLiteral("Icon"), QStringLiteral("%1,0").arg(exe_path));
+    reg.setValue(QStringLiteral("MUIVerb"), QStringLiteral("%1").arg(menu_name));
     reg.close();
 
     const QString shell_key = parent_key + QStringLiteral("\\shell");
@@ -59,21 +59,22 @@ bool Registry::createSubMenu(const QString &parent_key, const QString &menu_name
     }
     reg.close();
 
-    for (const auto &[ext, title]: items) {
-        QString item_key = shell_key + QStringLiteral("\\") + ext;
+    for (int i = 0; i < items.size(); ++i) {
+        auto &[ext, title] = items[i];
+        QString item_key = shell_key + QStringLiteral("\\%1-").arg(i + 1, QString::number(items.size()).length(), 10, QLatin1Char('0')) + ext;
 
         if (!reg.open(item_key, true)) {
             continue;
         }
 
-        reg.setValue(QString(), ext);
+        reg.setValue(QStringLiteral(), QStringLiteral("%1").arg(ext));
         reg.setValue(QStringLiteral("MUIVerb"), QStringLiteral("%1").arg(title));
         reg.close();
 
         QString command_key = item_key + QStringLiteral(R"(\command)");
         if (reg.open(command_key, true)) {
-            QString command = QStringLiteral(R"(%1 -f %2 "%3")").arg(exe_path_quoted).arg(ext).arg(QString("%1"));
-            reg.setValue(QString(), command);
+            auto command = QStringLiteral(R"(%1 -f %2 "%3")").arg(exe_path_quoted).arg(ext).arg(QString("%1"));
+            reg.setValue(QStringLiteral(), command);
             reg.close();
         }
     }
@@ -89,6 +90,7 @@ bool Registry::installContextMenu() {
     QList<SubMenuItem> convert_items;
 
     convert_items.append({QStringLiteral("ttml"), QStringLiteral("TTML 文件去格式化/压缩")});
+    convert_items.append({QStringLiteral("amll"), QStringLiteral("转换为 AMLL 样式")});
     convert_items.append({QStringLiteral("ass"), QStringLiteral("转换为 ASS 特效字幕")});
     convert_items.append({QStringLiteral("lrc"), QStringLiteral("转换为 LRC 歌词 (Walkman 标准)")});
     convert_items.append({QStringLiteral("spl"), QStringLiteral("转换为 SPL 歌词")});
