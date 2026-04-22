@@ -21,12 +21,17 @@
 #include <QRegularExpression>
 #include <QSettings>
 #include <QInputDialog>
+#include <QMessageBox>
 
 #include "version.h"
 
 #include "src/lyric/lyric_object/LyricObject.hpp"
 
+#define DEBUGGING 0
+#if DEBUGGING
+#else
 #pragma comment( linker, R"(/subsystem:"windows" /entry:"mainCRTStartup")" ) // 设置入口地址
+#endif
 
 const QStringList supported_formats = {
     "ass",
@@ -129,15 +134,22 @@ QString generateOutputFileName(const QString& original_filename, QString output_
 
     auto temp_map = convertKeysToUpperCaseNoSpace(original_map);
 
+
     temp_map["TITLE"] = temp_map["MUSICNAME"];
     temp_map["ARTIST"] = temp_map["ARTISTS"];
 
     QMap<QString, QString> template_map;
 
     for (const auto &[key, value]: temp_map.asKeyValueRange()) {
-        template_map[QString("ALL") + key] = temp_map[key].join("／");
-        template_map[key] = temp_map[key].first();
+        if (not value.isEmpty()) {
+            template_map[QString("ALL") + key] = temp_map[key].join("／");
+            template_map[key] = temp_map[key].first();
+        }
     }
+
+#if DEBUGGING
+    QMessageBox::information(nullptr, "提示", "成功");
+#endif
 
     const QRegularExpression re(R"(%([A-z]+)%)");
     auto ite = re.globalMatch(output_template);
@@ -262,6 +274,7 @@ int main(int argc, char *argv[]) {
     auto [lyric_object, generate_status] = LyricObject::fromTTML(ttml_content);
 
     if (generate_status != LyricObject::Status::Success) {
+        QMessageBox::critical(nullptr, "错误", "解析 TTML 文件失败");
         return 1;
     }
 
@@ -295,6 +308,7 @@ int main(int argc, char *argv[]) {
     try {
         output_content = convert(lyric_object, format.toLower());
     } catch ([[maybe_unused]] const std::exception &e) {
+        QMessageBox::critical(nullptr, "错误", "转换失败");
         return 1;
     }
 
