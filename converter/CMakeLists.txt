@@ -17,14 +17,14 @@
 # 先引入 lyric 子项目，获取其版本号
 add_subdirectory(src/lyric)
 
-project(converter VERSION 0.2.1.${LYRIC_VERSION_COMBINED})
+project(converter VERSION 0.4.2.${LYRIC_VERSION_COMBINED})
 
 message(STATUS "converter version: ${PROJECT_VERSION}")
 
 set(CMAKE_AUTOMOC ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Xml Gui)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Xml Gui)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Xml Gui Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Xml Gui Widgets)
 
 # 获取当前年份
 string(TIMESTAMP CURRENT_YEAR "%Y")
@@ -58,5 +58,6 @@ target_link_libraries(converter PRIVATE
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Xml
     Qt${QT_VERSION_MAJOR}::Gui
+    Qt${QT_VERSION_MAJOR}::Widgets
     LyricParser::lyric
 )

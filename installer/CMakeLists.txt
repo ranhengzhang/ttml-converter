@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-project(installer VERSION 0.2.2)
+project(installer VERSION 0.4.2)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
