@@ -1,6 +1,9 @@
 .idea/
+.qtcreator/
 .claude/
 cmake-build-*/
-.gitnexus
+.gitnexus/
+.vscode/
 AGENTS.md
 CLAUDE.md
+**/CMakeLists.txt.user
